@@ -8,14 +8,17 @@ from PIL import Image, ImageEnhance
 
 plant_data = []
 
+
 @st.cache
 def load_image(img):
     im = Image.open(img)
     return im
 
+
 @st.cache
 def convert_df(df):
     return df.to_csv().encode('utf-8')
+
 
 def plant_detection(file_name):
     current_plant = []
@@ -32,7 +35,7 @@ def plant_detection(file_name):
     PlantNet.setInput(blob)
     outs = PlantNet.forward(output_layers)
 
-    #detection
+    # detection
     for out in outs:
         for detection in out:
             scores = detection[5:]
@@ -100,7 +103,6 @@ def plant_detection(file_name):
 
 
 def main():
-
     st.title('plaNet - neural web for plant detection')
 
     activities = ['Detection', 'About']
@@ -122,7 +124,6 @@ def main():
                 cv2.imwrite(zip_file_name, zip_image)
                 final_zip.write(zip_file_name)
             st.image(result_img)
-
 
         plant_df = pd.DataFrame(plant_data, columns=['File_name', 'Plant_type', 'Leaves_area'])
         csv = convert_df(plant_df)
