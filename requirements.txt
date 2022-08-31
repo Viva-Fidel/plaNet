@@ -1,6 +1,5 @@
 numpy~=1.23.2
 opencv-python-headless
-opencv-python~=4.6.0.66
 pandas~=1.4.3
 streamlit~=1.12.2
 Pillow~=9.2.0
