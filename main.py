@@ -112,6 +112,8 @@ def main():
         st.subheader('Plant Detection')
 
         uploaded_files = st.file_uploader('Upload images', type=['jpg', 'png', 'jpeg'], accept_multiple_files=True)
+        with zipfile.ZipFile('result.zip', 'w') as final_zip:
+            pass
 
         for uploaded_file in uploaded_files:
             new_image = Image.open(uploaded_file)
@@ -123,12 +125,13 @@ def main():
                 zip_image = result_img
                 cv2.imwrite(zip_file_name, zip_image)
                 final_zip.write(zip_file_name)
+
             st.image(result_img)
 
         plant_df = pd.DataFrame(plant_data, columns=['File_name', 'Plant_type', 'Leaves_area'])
         csv = convert_df(plant_df)
 
-        final_zip = 'result.zip'
+        #final_zip = 'result.zip'
 
         st.download_button(
             label="Download data as CSV",
@@ -139,10 +142,9 @@ def main():
 
         st.download_button(
             label="Download ZIP file with results",
-            data=final_zip,
+            data=open('result.zip', 'rb').read(),
             file_name='result.zip',
-            mime='application/zip',
-        )
+            mime='application/zip')
 
 
     elif choice == 'About':
