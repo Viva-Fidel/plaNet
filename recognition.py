@@ -1,5 +1,5 @@
 from settings import *
-
+import streamlit as st
 
 class Recognition:
     """Recognizes the plant and outputs the information about the area"""
@@ -12,7 +12,7 @@ class Recognition:
     def __init__(self, img, img_name):
         self.img = img
         self.img_name = img_name
-        self.height, self.width, self.channels = img.shape
+        self.height, self.width, _ = img.shape
 
     def preprocess(self):
         PlantNet.setInput(cv2.dnn.blobFromImage(self.img, 0.00392, (416, 416), (0, 0, 0), True, crop=False))
@@ -53,10 +53,12 @@ class Recognition:
 
     def detected(self, indexes):
         x, y, w, h = self.bounding_box(indexes)
-        plant_mask = self.plant_mask(x, y, w, h)
+        plant_mask, contours_plant, cropped_image = self.plant_mask(x, y, w, h)
+        self.detect_color(contours_plant, cropped_image)
         square_mask = self.square_mask()
-        calculate_area = self.calculate_area(plant_mask, square_mask)
-        self.add_text(calculate_area)
+        area_text = self.calculate_area(plant_mask, square_mask)
+        self.add_text(area_text)
+        cv2.cvtColor(self.img, cv2.COLOR_HSV2RGB)
         return self.img
 
     def bounding_box(self, indexes):
@@ -72,7 +74,7 @@ class Recognition:
     def plant_mask(self, x, y, w, h):
         cropped_image = self.img[y:y + h, x:x + w]
         img_plant = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2LAB)
-        L, A, B = cv2.split(img_plant)
+        _, A, B = cv2.split(img_plant)
         img_plant = cv2.subtract(B, A)
         _, thresh1 = cv2.threshold(img_plant, 20, 255, cv2.THRESH_BINARY)
         kernel = np.ones((3, 3), np.uint8)
@@ -86,7 +88,29 @@ class Recognition:
         for cnt in contours_plant:
             if cv2.contourArea(cnt) > 0:
                 area_plant += cv2.contourArea(cnt)
-        return area_plant
+        return area_plant, contours_plant, cropped_image
+
+    def detect_color(self, contours_plant, cropped_image):
+        plant_contours = cv2.drawContours(cropped_image, contours_plant, -1, (0, 255, 0), 3)
+        plant_contours_hsv = cv2.cvtColor(plant_contours, cv2.COLOR_RGB2HSV)
+        hue_value, _, _ = cv2.split(plant_contours_hsv)
+        mean_hue_value = np.mean(hue_value)
+        if mean_hue_value < 5:
+            plant_color = "Red"
+        elif mean_hue_value < 22:
+            plant_color = "Orange"
+        elif mean_hue_value < 33:
+            plant_color = "Yellow"
+        elif mean_hue_value < 78:
+            plant_color = "Green"
+        elif mean_hue_value < 131:
+            plant_color = "Blue"
+        elif mean_hue_value < 170:
+            plant_color = "Violet"
+        else:
+            mean_hue_value = "Undefined"
+        self.current_plant_data.append(plant_color)
+
 
     def square_mask(self):
         img_square = cv2.cvtColor(self.img, cv2.COLOR_RGB2HSV)
@@ -98,12 +122,11 @@ class Recognition:
         return area_square
 
     def calculate_area(self, plant_mask, square_mask):
-        sqrcm_plant = round(plant_mask / square_mask, 2)
-        sqrcm_text = f'''{self.img_name}
-        Area of leaves: {sqrcm_plant}'''
-        self.current_plant_data.append(sqrcm_plant)
-        return sqrcm_text
+        area = round(plant_mask / square_mask, 2)
+        self.current_plant_data.append(area)
+        return f'Plant area {area}'
 
-    def add_text(self, calculate_area):
-        cv2.putText(self.img, calculate_area, (10, 100), font, 2, (255, 51, 51), 3, 2)
+    def add_text(self, area_text):
+        cv2.putText(self.img, self.img_name, (10, 100), font, 2, (255, 51, 51), 3, 2)
+        cv2.putText(self.img, str(area_text), (10, 200), font, 2, (255, 51, 51), 3, 2)
         self.plant_data.append(self.current_plant_data)

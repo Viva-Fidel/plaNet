@@ -28,7 +28,7 @@ class Main:
             final_zip.write(zip_file_name)
 
     st.title('PlaNet - neural web for plant detection and progress tracking')
-    activities = ['Detection', 'Updates']
+    activities = ['Detection', 'Updates', 'To Do']
     choice = st.sidebar.selectbox('Select Activity', activities)
 
     if choice == 'Detection':
@@ -55,7 +55,7 @@ class Main:
             st.image(result)
             create_zip(result, file_name)
 
-        plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Leaves_area'])
+        plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Color', 'Leaves_area'])
         csv = plant_df.to_csv().encode('utf-8')
 
         st.download_button(
@@ -73,7 +73,18 @@ class Main:
 
     elif choice == 'Updates':
         st.subheader('Updates')
-        st.write('02.09.2022. Rewrote code using OOP')
+        st.write('02.09.2022. Rewrote code using OOP. Fixed bugs. Added To Do page')
+
+    elif choice == 'To Do':
+        st.subheader('To Do')
+        st.write('Fix bugs')
+        st.write('NaN if no detection')
+        st.write('Plant color detection')
+        st.write('Graphs visualization')
+        st.write('Configure Cache')
+        st.write('New Features')
+        st.write('Beautiful readme on GitHub')
+        st.write('Plant type recognition')
 
 if __name__ == '__main__':
     website = Main()
