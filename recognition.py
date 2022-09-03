@@ -15,10 +15,12 @@ class Recognition:
         self.height, self.width, _ = img.shape
 
     def preprocess(self):
-        PlantNet.setInput(cv2.dnn.blobFromImage(self.img, 0.00392, (416, 416), (0, 0, 0), True, crop=False))
+        PlantNet.setInput(cv2.dnn.blobFromImage(self.img, 1/255.0, (416, 416), True, crop=False))
         return PlantNet.forward(output_layers)
 
     def detection(self, outs):
+        self.boxes=[]
+        self.confidences = []
         for out in outs:
             for detection in out:
                 scores = detection[5:]
@@ -36,7 +38,7 @@ class Recognition:
                     self.class_ids.append(class_id)
 
     def not_detected(self):
-        cv2.putText(self.img, 'No plant was detected', (0, self.height - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 2,
+        cv2.putText(self.img, 'No plant was detected', (0, self.height - 10), font, 2,
                     (255, 51, 51), 2)
         return self.img
 
@@ -53,12 +55,11 @@ class Recognition:
 
     def detected(self, indexes):
         x, y, w, h = self.bounding_box(indexes)
-        plant_mask, contours_plant, cropped_image = self.plant_mask(x, y, w, h)
+        area_plant, contours_plant, cropped_image = self.plant_mask(x, y, w, h)
         self.detect_color(contours_plant, cropped_image)
-        square_mask = self.square_mask()
-        area_text = self.calculate_area(plant_mask, square_mask)
+        area_square = self.square_mask()
+        area_text = self.calculate_area(area_plant, area_square)
         self.add_text(area_text)
-        cv2.cvtColor(self.img, cv2.COLOR_HSV2RGB)
         return self.img
 
     def bounding_box(self, indexes):
@@ -68,7 +69,7 @@ class Recognition:
                 label = str(classes[self.class_ids[i]])
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 255), 2)
                 cv2.putText(self.img, label, (x, y - 100), font, 2, (255, 51, 51), 2)
-                self.current_plant_data.append(label)
+        self.current_plant_data.append(label)
         return x, y, w, h
 
     def plant_mask(self, x, y, w, h):
@@ -106,9 +107,9 @@ class Recognition:
         elif mean_hue_value < 131:
             plant_color = "Blue"
         elif mean_hue_value < 170:
-            plant_color = "Violet"
+             plant_color = "Violet"
         else:
-            mean_hue_value = "Undefined"
+            plant_color = "Undefined"
         self.current_plant_data.append(plant_color)
 
 
@@ -121,8 +122,8 @@ class Recognition:
             area_square += cv2.contourArea(cnt)
         return area_square
 
-    def calculate_area(self, plant_mask, square_mask):
-        area = round(plant_mask / square_mask, 2)
+    def calculate_area(self, area_plant, square_mask):
+        area = round(area_plant / square_mask, 2)
         self.current_plant_data.append(area)
         return f'Plant area {area}'
 

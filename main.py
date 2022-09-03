@@ -22,10 +22,8 @@ class Main:
 
     def create_zip(result, file_name):
         with zipfile.ZipFile('result.zip', 'a') as final_zip:
-            zip_file_name = file_name
-            zip_image = result
-            cv2.imwrite(zip_file_name, zip_image)
-            final_zip.write(zip_file_name)
+            cv2.imwrite(file_name, cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+            final_zip.write(file_name)
 
     st.title('PlaNet - neural web for plant detection and progress tracking')
     activities = ['Detection', 'Updates', 'To Do']
@@ -45,15 +43,11 @@ class Main:
 
             st.image(new_image)
 
-            new_image = cv2.imread(uploaded_file.name)
-            file_name = uploaded_file.name
-            new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
-
-            result_img = Recognition(new_image, file_name)
+            result_img = Recognition(cv2.cvtColor(cv2.imread(uploaded_file.name), cv2.COLOR_BGR2RGB), uploaded_file.name)
             result = result_img.do_detection()
 
             st.image(result)
-            create_zip(result, file_name)
+            create_zip(result, uploaded_file.name)
 
         plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Color', 'Leaves_area'])
         csv = plant_df.to_csv().encode('utf-8')
@@ -74,12 +68,12 @@ class Main:
     elif choice == 'Updates':
         st.subheader('Updates')
         st.write('02.09.2022. Rewrote code using OOP. Fixed bugs. Added To Do page')
+        st.write('03.09.2022. Fixed bugs. Refactored code')
 
     elif choice == 'To Do':
         st.subheader('To Do')
         st.write('Fix bugs')
         st.write('NaN if no detection')
-        st.write('Plant color detection')
         st.write('Graphs visualization')
         st.write('Configure Cache')
         st.write('New Features')
