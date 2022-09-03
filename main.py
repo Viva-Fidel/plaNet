@@ -26,7 +26,7 @@ class Main:
             final_zip.write(file_name)
 
     st.title('PlaNet - neural web for plant detection and progress tracking')
-    activities = ['Detection', 'Updates', 'To Do']
+    activities = ['Detection', 'Graphs visualization', 'Updates', 'To Do']
     choice = st.sidebar.selectbox('Select Activity', activities)
 
     if choice == 'Detection':
@@ -37,7 +37,14 @@ class Main:
         with zipfile.ZipFile('result.zip', 'w') as final_zip:
             pass
 
+        st.write("Progress bar")
+        progress_bar = st.progress(0)
+        bar_counter = 0
+
         for uploaded_file in uploaded_files:
+            #bar_counter += 1/len(uploaded_files)
+            #progress_bar.progress(bar_counter)
+
             new_image = Image.open(uploaded_file)
             new_image.save(uploaded_file.name)
 
@@ -49,8 +56,12 @@ class Main:
             st.image(result)
             create_zip(result, uploaded_file.name)
 
+            bar_counter += 1 / len(uploaded_files)
+            progress_bar.progress(bar_counter)
+
         plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Color', 'Leaves_area'])
         csv = plant_df.to_csv().encode('utf-8')
+
 
         st.download_button(
             label="Download data as CSV",
@@ -65,15 +76,20 @@ class Main:
             file_name='result.zip',
             mime='application/zip')
 
+    elif choice == 'Graphs visualization':
+        try:
+            st.line_chart(plant_df['Leaves_area'])
+        except:
+            st.error('First upload photos', icon="🚨")
+
     elif choice == 'Updates':
         st.subheader('Updates')
+        st.write('03.09.2022. Fixed bugs. Refactored code. Added Progress bar')
         st.write('02.09.2022. Rewrote code using OOP. Fixed bugs. Added To Do page')
-        st.write('03.09.2022. Fixed bugs. Refactored code')
 
     elif choice == 'To Do':
         st.subheader('To Do')
         st.write('Fix bugs')
-        st.write('NaN if no detection')
         st.write('Graphs visualization')
         st.write('Configure Cache')
         st.write('New Features')

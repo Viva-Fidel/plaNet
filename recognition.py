@@ -1,5 +1,5 @@
 from settings import *
-import streamlit as st
+
 
 class Recognition:
     """Recognizes the plant and outputs the information about the area"""
@@ -15,11 +15,11 @@ class Recognition:
         self.height, self.width, _ = img.shape
 
     def preprocess(self):
-        PlantNet.setInput(cv2.dnn.blobFromImage(self.img, 1/255.0, (416, 416), True, crop=False))
+        PlantNet.setInput(cv2.dnn.blobFromImage(self.img, 1 / 255.0, (416, 416), True, crop=False))
         return PlantNet.forward(output_layers)
 
     def detection(self, outs):
-        self.boxes=[]
+        self.boxes = []
         self.confidences = []
         for out in outs:
             for detection in out:
@@ -40,6 +40,7 @@ class Recognition:
     def not_detected(self):
         cv2.putText(self.img, 'No plant was detected', (0, self.height - 10), font, 2,
                     (255, 51, 51), 2)
+        self.plant_data.append([self.img_name, np.nan, np.nan, np.nan])
         return self.img
 
     def do_detection(self):
@@ -107,11 +108,10 @@ class Recognition:
         elif mean_hue_value < 131:
             plant_color = "Blue"
         elif mean_hue_value < 170:
-             plant_color = "Violet"
+            plant_color = "Violet"
         else:
             plant_color = "Undefined"
         self.current_plant_data.append(plant_color)
-
 
     def square_mask(self):
         img_square = cv2.cvtColor(self.img, cv2.COLOR_RGB2HSV)
