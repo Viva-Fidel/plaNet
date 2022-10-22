@@ -1,5 +1,6 @@
 from settings import *
-
+import streamlit as st
+import random
 
 class Recognition:
     """Recognizes the plant and outputs the information about the area"""
@@ -56,10 +57,10 @@ class Recognition:
 
     def detected(self, indexes):
         x, y, w, h = self.bounding_box(indexes)
-        area_plant, contours_plant, cropped_image = self.plant_mask(x, y, w, h)
+        convex_hull_area, area_plant, contours_plant, cropped_image = self.plant_mask(x, y, w, h)
         self.detect_color(contours_plant, cropped_image)
         area_square = self.square_mask()
-        area_text = self.calculate_area(area_plant, area_square)
+        area_text = self.calculate_area(convex_hull_area, area_plant, area_square)
         self.add_text(area_text)
         return self.img
 
@@ -85,12 +86,29 @@ class Recognition:
         opening = cv2.morphologyEx(erosion, cv2.MORPH_OPEN, kernel)
         opening = cv2.morphologyEx(opening, cv2.MORPH_OPEN, kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+        convex_hull_area = self.convex_hull(cropped_image, closing)
         contours_plant, _ = cv2.findContours(closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         area_plant = 0
         for cnt in contours_plant:
             if cv2.contourArea(cnt) > 0:
                 area_plant += cv2.contourArea(cnt)
-        return area_plant, contours_plant, cropped_image
+        return convex_hull_area, area_plant, contours_plant, cropped_image
+
+    def convex_hull(self, cropped_image, closing):
+        contours, _ = cv2.findContours(closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        hull_list = []
+        for i in range(len(contours)):
+            hull = cv2.convexHull(contours[i])
+            hull_list.append(hull)
+        drawing = np.zeros((cropped_image.shape[0], cropped_image.shape[1], 3), dtype=np.uint8)
+        cropped_image = cv2.fillPoly(drawing, hull_list, (255, 255, 255))
+        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2GRAY)
+        contours, _ = cv2.findContours(cropped_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        convex_hull_area = 0
+        for cnt in contours:
+            if cv2.contourArea(cnt) > 0:
+                convex_hull_area += cv2.contourArea(cnt)
+        return convex_hull_area
 
     def detect_color(self, contours_plant, cropped_image):
         plant_contours = cv2.drawContours(cropped_image, contours_plant, -1, (0, 255, 0), 3)
@@ -122,10 +140,12 @@ class Recognition:
             area_square += cv2.contourArea(cnt)
         return area_square
 
-    def calculate_area(self, area_plant, square_mask):
-        area = round(area_plant / square_mask, 2)
-        self.current_plant_data.append(area)
-        return f'Plant area {area}'
+    def calculate_area(self, convex_hull_area, area_plant, square_mask):
+        area_plant_cm = round(area_plant / square_mask, 2)
+        convex_hull_area_cm = round(convex_hull_area / square_mask, 2)
+        self.current_plant_data.append(area_plant_cm)
+        self.current_plant_data.append(convex_hull_area_cm)
+        return f'Plant area {area_plant_cm}, convex hull area {convex_hull_area_cm}'
 
     def add_text(self, area_text):
         cv2.putText(self.img, self.img_name, (10, 100), font, 2, (255, 51, 51), 3, 2)

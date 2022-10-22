@@ -59,7 +59,7 @@ class Main:
             bar_counter += 1 / len(uploaded_files)
             progress_bar.progress(bar_counter)
 
-        plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Color', 'Leaves_area'])
+        plant_df = pd.DataFrame(Recognition.plant_data, columns=['File_name', 'Plant_type', 'Color', 'Leaves_area', 'Convex hull area'])
         csv = plant_df.to_csv().encode('utf-8')
 
 
@@ -75,12 +75,6 @@ class Main:
             data=open('result.zip', 'rb').read(),
             file_name='result.zip',
             mime='application/zip')
-
-    elif choice == 'Graphs visualization':
-        try:
-            st.line_chart(plant_df['Leaves_area'])
-        except:
-            st.error('First upload photos', icon="🚨")
 
     elif choice == 'Updates':
         st.subheader('Updates')
