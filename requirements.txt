@@ -3,3 +3,4 @@ opencv-python-headless
 pandas~=1.4.3
 streamlit~=1.12.2
 Pillow~=9.2.0
+webcolors~=1.12
