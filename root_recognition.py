@@ -53,5 +53,6 @@ class Root_recognition:
         return f'Height {height}, width {width}'
 
     def add_text(self, area_text):
+        cv2.putText(self.img, self.img_name, (10, 100), font, 1, (255, 51, 51), 2, 2)
         cv2.putText(self.img, str(area_text), (10, 200), font, 1, (255, 51, 51), 2, 2)
         self.root_data.append(self.current_root_data)
